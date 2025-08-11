@@ -32,12 +32,52 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // Minecraft world data
+    worlds: defineTable({
+      name: v.string(),
+      seed: v.number(),
+      ownerId: v.id("users"),
+      isPublic: v.boolean(),
+      description: v.optional(v.string()),
+    })
+      .index("by_owner", ["ownerId"])
+      .index("by_public", ["isPublic"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Block data for chunks
+    chunks: defineTable({
+      worldId: v.id("worlds"),
+      chunkX: v.number(),
+      chunkZ: v.number(),
+      blocks: v.array(v.object({
+        x: v.number(),
+        y: v.number(),
+        z: v.number(),
+        type: v.string(), // grass, dirt, stone, wood, etc.
+      })),
+    })
+      .index("by_world_and_position", ["worldId", "chunkX", "chunkZ"]),
+
+    // Player data
+    players: defineTable({
+      userId: v.id("users"),
+      worldId: v.id("worlds"),
+      position: v.object({
+        x: v.number(),
+        y: v.number(),
+        z: v.number(),
+      }),
+      rotation: v.object({
+        x: v.number(),
+        y: v.number(),
+      }),
+      inventory: v.array(v.object({
+        type: v.string(),
+        count: v.number(),
+        slot: v.number(),
+      })),
+    })
+      .index("by_user_and_world", ["userId", "worldId"])
+      .index("by_world", ["worldId"]),
   },
   {
     schemaValidation: false,
